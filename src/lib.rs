@@ -50,3 +50,14 @@ impl ConfigData {
         };
     }
 }
+
+pub fn calc_expression(expr: String) -> Result<i64, ()> {
+    //this function requires an expression to have only values and operators
+    let operators: [&str, 5] = ["^", "*", "/", "+", "-"];
+    for operator in operators {
+        match expr.find(operator) {
+            None => continue;
+            Some(pos) => 
+        }
+    }
+}
