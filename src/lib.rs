@@ -18,10 +18,11 @@ impl ConfigData {
         for byte in self.score.to_be_bytes() {
             data.push(byte)
         }
+        debug_assert!(data.len() == CONFIG_LENGTH);
         data
     }
-    pub fn save_config(cfg: ConfigData) -> Result<(), std::io::Error> {
-        std::fs::write(Path::new(CONFIG_PATH), cfg.serialize())?;
+    pub fn save_config(&self) -> Result<(), std::io::Error> {
+        std::fs::write(Path::new(CONFIG_PATH), self.serialize())?;
         Ok(())
     }
 
@@ -40,7 +41,7 @@ impl ConfigData {
         }
     }
     pub fn load_config() -> ConfigData {
-        let config_path = Path::new(".config");
+        let config_path = Path::new(CONFIG_PATH);
         if config_path.exists() {
             // loads an existing config
             return ConfigData::deserialize(std::fs::read(config_path).unwrap());
@@ -48,16 +49,5 @@ impl ConfigData {
             // or loads default values
             return ConfigData { x: 4, score: 0 };
         };
-    }
-}
-
-pub fn calc_expression(expr: String) -> Result<i64, ()> {
-    //this function requires an expression to have only values and operators
-    let operators: [&str, 5] = ["^", "*", "/", "+", "-"];
-    for operator in operators {
-        match expr.find(operator) {
-            None => continue;
-            Some(pos) => 
-        }
     }
 }
