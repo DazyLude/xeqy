@@ -5,12 +5,13 @@ use xeqy::ConfigData;
 const HELP_MESSAGE: &str = r#"
 This game is called x=y. It's goal is to solve a randomly generated puzzle.
 You need to rearrange an x number of digits, using basic arithmetic operations and parentheses, to make an expression that equals to y.
-For example, for a given prompt "1 2 3 4 = 10", all of "1+2+3+4", "1*2+3+4" and "3*4-1*2" are correct answers.
+For example, for a given prompt "1 2 3 4 = 10", all of "1+2+3+4", "3*4-1*2" and "(2*3+4)^1" are correct answers.
+
 "#;
 
 fn main() {
     // loading config
-    let config = ConfigData::load_config();
+    let mut config = ConfigData::load_config();
     let mut puzz = Puzzle {
         answer: 0,
         prompt: "".to_string(),
@@ -38,12 +39,16 @@ fn main() {
                     match deparenthesizer(&input.to_string()) {
                         Ok(value) => {
                             if value == puzz.answer {
-                                println!("victory!")
+                                println!("victory!");
+                                config.score += config.x as i64;
+                                waiting_for_an_answer = false;
                             } else {
                                 println!("{value}")
                             }
                         }
-                        Err(msg) => println!("I can't understand your input, because:\n{msg}"),
+                        Err(msg) => println!(
+                            "I can't understand your input, there is something wrong:\n{msg}"
+                        ),
                     }
                 } else {
                     println!("Unknown command. Try again!")
@@ -69,25 +74,47 @@ fn generate_puzzle(x: u32) -> Puzzle {
     let mut values: Vec<i64> = Vec::new();
     // generating values to do math magic with
     while size < x {
-        max_size = if (x / 2) < (x - size) {
+        max_size = if (x / 2) <= (x - size) {
             x / 2
         } else {
             x - size
         };
         let add_size = rng.gen_range(0..max_size) + 1;
-        if size == 0 {
-            break;
-        }
-        if size == 1 {
+        if add_size == 1 {
             values.push(rng.gen_range(0..10));
         } else {
-            values.push(rng.gen_range(10_u32.pow(size - 1)..10_u32.pow(size)).into());
+            values.push(
+                rng.gen_range(10_u32.pow(add_size - 1)..10_u32.pow(add_size))
+                    .into(),
+            );
         }
         size += add_size;
     }
+
+    let mut prompt: String = "".to_string();
+    for value in &values {
+        for digit in value.to_string().chars() {
+            prompt.push(digit);
+            prompt.push(' ');
+        }
+    }
+
+    let mut expression = values.pop().unwrap().to_string();
+    for value in values {
+        expression += match rng.gen_range(0..10) {
+            x if x < 3 => "+",
+            x if x < 6 => "-",
+            x if x < 8 => "*",
+            x if x < 10 => "/",
+            _ => "^", // :^)
+        };
+        expression += &value.to_string();
+    }
+
     // generating an expression
-    let answer = 0;
-    let prompt = "todo".to_string();
+    let answer = simexer(&expression).unwrap();
+    prompt += "= ";
+    prompt += &answer.to_string();
     Puzzle { answer, prompt }
 }
 
